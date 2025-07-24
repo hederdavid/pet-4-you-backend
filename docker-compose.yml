@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:15
     container_name: pet4you_db
     restart: always
     environment:

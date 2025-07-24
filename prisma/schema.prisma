@@ -14,4 +14,79 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
 
+enum PetStatus {
+  AVAILABLE
+  ADOPTED
+}
+
+enum PetSize {
+  SMALL
+  MEDIUM
+  LARGE
+}
+
+enum PetGender {
+  MALE
+  FEMALE
+}
+
+enum PetSpecies {
+  DOG
+  CAT
+  BIRD
+}
+
+enum PetAge {
+  PUPPY
+  ADULT
+  SENIOR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  city      String
+  state     String
+  phone     String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  pets      Pet[]
+}
+
+model Pet {
+  id          String     @id @default(uuid())
+  name        String
+  description String     @db.Text
+  species     PetSpecies
+  age         PetAge
+  size        PetSize
+  gender      PetGender
+  status      PetStatus  @default(AVAILABLE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
+  authorId    String
+
+  author User    @relation(fields: [authorId], references: [id])
+  photos Photo[]
+}
+
+model Photo {
+  id        String   @id @default(uuid())
+  url       String
+  petId     String
+  pet       Pet      @relation(fields: [petId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+}
