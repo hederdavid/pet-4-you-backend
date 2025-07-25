@@ -75,10 +75,10 @@ model Pet {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   deletedAt   DateTime?
-  authorId    String
+  userId     String
 
-  author User    @relation(fields: [authorId], references: [id])
-  photos Photo[]
+  user      User    @relation(fields: [userId], references: [id])
+  photos    Photo[]
 }
 
 model Photo {
