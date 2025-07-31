@@ -47,6 +47,12 @@ enum PetAge {
   SENIOR
 }
 
+enum PublicationStatus {
+  APROVED
+  REJECTED
+  PENDING
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -56,9 +62,9 @@ model User {
   state     String
   phone     String
   role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
 
   pets      Pet[]
 }
@@ -71,12 +77,13 @@ model Pet {
   age         PetAge
   size        PetSize
   gender      PetGender
-  status      PetStatus  @default(AVAILABLE)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  deletedAt   DateTime?
+  pet_status  PetStatus  @default(AVAILABLE)
+  publication_status PublicationStatus @default(PENDING)
+  publication_date DateTime @default(now()) @db.Timestamptz
+  createdAt   DateTime   @default(now()) @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @db.Timestamptz
+  deletedAt   DateTime? @db.Timestamptz
   userId     String
-
   user      User    @relation(fields: [userId], references: [id])
   photos    Photo[]
 }
@@ -86,7 +93,7 @@ model Photo {
   url       String
   petId     String
   pet       Pet      @relation(fields: [petId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  createdAt DateTime @default(now()) @db.Timestamptz
+  updatedAt DateTime @updatedAt @db.Timestamptz
+  deletedAt DateTime? @db.Timestamptz
 }

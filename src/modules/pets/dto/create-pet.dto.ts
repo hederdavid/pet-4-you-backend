@@ -50,11 +50,9 @@ export class CreatePetDto {
   })
   gender: PetGender;
 
-  @IsEnum(PetStatus, {
-    message: 'Status inválido. Valores aceitos: AVAILABLE, ADOPTED.',
-  })
+  @IsString({ message: 'A data de publicação deve ser uma string.' })
   @IsOptional()
-  status?: PetStatus;
+  publication_date: string;
 
   @IsArray({ message: 'As fotos devem ser enviadas em um array.' })
   @ArrayMinSize(1, { message: 'O pet deve ter pelo menos uma foto.' })

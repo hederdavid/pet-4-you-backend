@@ -16,7 +16,9 @@ export class PetsService {
         age: createPetDto.age,
         size: createPetDto.size,
         gender: createPetDto.gender,
-        status: createPetDto.status ?? 'AVAILABLE',
+        pet_status: 'AVAILABLE',
+        publication_status: 'PENDING',
+        publication_date: new Date().toISOString(),
         userId: createPetDto.userId,
         photos: {
           create: createPetDto.photos.map((photo) => ({ url: photo })),
