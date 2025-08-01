@@ -48,7 +48,7 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user || user.deletedAt) {
       throw new UnauthorizedException('Usuário não encontrado ou inativo.');
     }
-    
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+
+    return { userId: payload.sub, name: user.name, email: payload.email, role: payload.role };
   }
 }

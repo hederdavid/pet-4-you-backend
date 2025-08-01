@@ -11,7 +11,10 @@ async function bootstrap() {
   const APP_HOSTNAME = process.env.APP_HOSTNAME || 'localhost';
   const ssl = process.env.SSL === 'true';
   app.use(cookieParser());
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:9001',
+    credentials: true
+  });
   await app.listen(HTTP_PORT, () => {
     const address =
       'http' + (ssl ? 's' : '') + '://' + APP_HOSTNAME + ':' + HTTP_PORT + '/';
