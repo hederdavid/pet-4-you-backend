@@ -1,18 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
-import { AuthTokenGuard } from '../auth/guard/auth-token.guard';
+import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 
 @Controller('pets')
 export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
-  @UseGuards(AuthTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @Post()
   create(@Body() createPetDto: CreatePetDto) {
     return this.petsService.create(createPetDto);
   }
+
 
   @Get()
   findAll() {
@@ -24,13 +34,13 @@ export class PetsController {
     return this.petsService.findOne(id);
   }
 
-  @UseGuards(AuthTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
     return this.petsService.update(id, updatePetDto);
   }
 
-  @UseGuards(AuthTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.petsService.remove(id);

@@ -1,15 +1,15 @@
 import {
-  Inject,
+  ForbiddenException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { HashingServiceProtocol } from './hash/hashing.service';
-import jwtConfig from './config/jwt.config';
-import { ConfigType } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Response } from 'express';
+import { LoginDto } from './dto/login.dto';
+import { User } from 'generated/prisma';
 
 @Injectable()
 export class AuthService {
@@ -17,20 +17,16 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly hashingService: HashingServiceProtocol,
     private readonly jwtService: JwtService,
-
-    @Inject(jwtConfig.KEY)
-    private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly configService: ConfigService,
   ) {}
-  async authenticate(loginDto: LoginDto) {
+
+  async validateUser(loginDto: LoginDto): Promise<User> {
     const user = await this.prisma.user.findFirst({
-      where: {
-        email: loginDto.email,
-        deletedAt: null,
-      },
+      where: { email: loginDto.email, deletedAt: null },
     });
 
     if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new UnauthorizedException('E-mail ou senha inválidos.');
     }
 
     const isPasswordValid = await this.hashingService.compare(
@@ -39,26 +35,104 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Senha inválida');
+      throw new UnauthorizedException('E-mail ou senha inválidos.');
     }
 
-    const token = await this.jwtService.signAsync(
-      {
-        sub: user.id,
-        email: user.email,
-      },
-      {
-        secret: this.jwtConfiguration.secret,
-        expiresIn: this.jwtConfiguration.jwtTtl,
-      },
-    );
+    const { password, refresh_token, ...result } = user;
+    return result as User;
+  }
+
+  async signin(user: User, res: Response) {
+    const tokens = await this._getTokens(user.id, user.email, user.role);
+    await this._updateRefreshToken(user.id, tokens.refreshToken);
+
+    this._setCookies(res, tokens.accessToken, tokens.refreshToken);
 
     return {
+      message: 'Login bem-sucedido!',
       user: {
         id: user.id,
         name: user.name,
+        email: user.email,
+        role: user.role,
       },
-      accessToken: token,
     };
+  }
+
+  async logout(userId: string, res: Response) {
+    await this.prisma.user.update({
+      where: { id: userId, refresh_token: { not: null } },
+      data: { refresh_token: null },
+    });
+
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
+
+    return { message: 'Logout realizado com sucesso!' };
+  }
+
+  async refreshTokens(userId: string, refreshToken: string, res: Response) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.refresh_token) {
+      throw new ForbiddenException('Acesso negado.');
+    }
+
+    const refreshTokenMatches = await this.hashingService.compare(
+      refreshToken,
+      user.refresh_token,
+    );
+
+    if (!refreshTokenMatches) {
+      throw new ForbiddenException('Acesso negado.');
+    }
+
+    const tokens = await this._getTokens(user.id, user.email, user.role);
+    await this._updateRefreshToken(user.id, tokens.refreshToken);
+
+    this._setCookies(res, tokens.accessToken, tokens.refreshToken);
+    return { message: 'Tokens atualizados com sucesso!' };
+  }
+
+  private async _updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedToken = await this.hashingService.hash(refreshToken);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { refresh_token: hashedToken },
+    });
+  }
+
+  private async _getTokens(userId: string, email: string, role: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        { sub: userId, email, role },
+        {
+          secret: this.configService.get<string>('auth.accessTokenSecret'),
+          expiresIn: this.configService.get<string>('auth.accessTokenExpiration'),
+        },
+      ),
+      this.jwtService.signAsync(
+        { sub: userId, email, role },
+        {
+          secret: this.configService.get<string>('auth.refreshTokenSecret'),
+          expiresIn: this.configService.get<string>('auth.refreshTokenExpiration'),
+        },
+      ),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+
+  private _setCookies(res: Response, accessToken: string, refreshToken: string) {
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'strict',
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'strict',
+    });
   }
 }
