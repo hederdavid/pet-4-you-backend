@@ -50,12 +50,7 @@ export class AuthService {
 
     return {
       message: 'Login bem-sucedido!',
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
+      user: user
     };
   }
 

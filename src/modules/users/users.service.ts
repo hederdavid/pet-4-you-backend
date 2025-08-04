@@ -44,13 +44,13 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findOne(id);
+    const user = await this.findOne(id);
 
-    if (updateUserDto.email) {
+    if (updateUserDto.email && updateUserDto  != user.email) {
       await this._checkEmailExists(updateUserDto.email);
     }
 
-    if (updateUserDto.phone) {
+    if (updateUserDto.phone && updateUserDto.phone != user.phone) {
       await this._checkPhoneExists(updateUserDto.phone);
     }
 

@@ -12,7 +12,7 @@ async function bootstrap() {
   const ssl = process.env.SSL === 'true';
   app.use(cookieParser());
   app.enableCors({
-    origin: 'http://localhost:9001',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:9001',
     credentials: true
   });
   await app.listen(HTTP_PORT, () => {

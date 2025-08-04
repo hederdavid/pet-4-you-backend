@@ -19,7 +19,9 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    const accessTokenSecret = configService.get<string>('auth.accessTokenSecret');
+    const accessTokenSecret = configService.get<string>(
+      'auth.accessTokenSecret',
+    );
     if (!accessTokenSecret) {
       throw new Error('ACCESS_TOKEN_SECRET not found in environment variables');
     }
@@ -49,6 +51,16 @@ export class AccessTokenStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Usuário não encontrado ou inativo.');
     }
 
-    return { userId: payload.sub, name: user.name, email: payload.email, role: payload.role };
+    return {
+      userId: payload.sub,
+      name: user.name,
+      email: payload.email,
+      city: user.city,
+      state: user.state,
+      phone: user.phone,
+      role: payload.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }
