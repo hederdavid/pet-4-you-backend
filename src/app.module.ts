@@ -4,6 +4,8 @@ import { UsersModule } from './modules/users/users.module';
 import { PetsModule } from './modules/pets/pets.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from './plugins/database/database.module';
+import { FirebaseModule } from './modules/firebase/firebase.module';
+import { FirebaseService } from './modules/firebase/firebase.service';
 
 @Module({
   imports: [
@@ -14,8 +16,8 @@ import { DatabaseModule } from './plugins/database/database.module';
     PetsModule,
     AuthModule,
     DatabaseModule,
-    AuthModule
-    
+    AuthModule,
+    FirebaseModule,
   ],
   controllers: [],
   providers: [],

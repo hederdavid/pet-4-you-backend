@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { initializeApp } from 'firebase/app';
 
 process.env.TZ = 'America/Sao_Paulo';
 
@@ -13,7 +14,7 @@ async function bootstrap() {
   app.use(cookieParser());
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:9001',
-    credentials: true
+    credentials: true,
   });
   await app.listen(HTTP_PORT, () => {
     const address =

@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Response } from 'express';
 import { LoginDto } from './dto/login.dto';
 import { User } from 'generated/prisma';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +19,7 @@ export class AuthService {
     private readonly hashingService: HashingServiceProtocol,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   async validateUser(loginDto: LoginDto): Promise<User> {
@@ -50,7 +52,7 @@ export class AuthService {
 
     return {
       message: 'Login bem-sucedido!',
-      user: user
+      user: user,
     };
   }
 
@@ -102,14 +104,18 @@ export class AuthService {
         { sub: userId, email, role },
         {
           secret: this.configService.get<string>('auth.accessTokenSecret'),
-          expiresIn: this.configService.get<string>('auth.accessTokenExpiration'),
+          expiresIn: this.configService.get<string>(
+            'auth.accessTokenExpiration',
+          ),
         },
       ),
       this.jwtService.signAsync(
         { sub: userId, email, role },
         {
           secret: this.configService.get<string>('auth.refreshTokenSecret'),
-          expiresIn: this.configService.get<string>('auth.refreshTokenExpiration'),
+          expiresIn: this.configService.get<string>(
+            'auth.refreshTokenExpiration',
+          ),
         },
       ),
     ]);
@@ -117,7 +123,11 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  private _setCookies(res: Response, accessToken: string, refreshToken: string) {
+  private _setCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
@@ -129,5 +139,49 @@ export class AuthService {
       secure: this.configService.get('NODE_ENV') === 'production',
       sameSite: 'strict',
     });
+  }
+
+  async loginWithFirebase(token: string): Promise<User> {
+    try {
+      const firebaseUser = await this.firebaseService
+        .getAuth()
+        .verifyIdToken(token);
+
+      if (!firebaseUser.phone_number) {
+        throw new UnauthorizedException(
+          'Token do Firebase inválido ou sem número de telefone.',
+        );
+      }
+
+      // Tenta encontrar um usuário pelo UID do Firebase
+      let user = await this.prisma.user.findUnique({
+        where: { firebaseUid: firebaseUser.uid },
+      });
+
+      // Se não encontrar pelo UID, tenta pelo número de telefone para vincular a conta
+      if (!user) {
+        const phone = firebaseUser.phone_number.replace('+55', '');
+        user = await this.prisma.user.findFirst({
+          where: { phone },
+        });
+
+        // Se encontrou pelo telefone, atualiza com o firebaseUid
+        if (user) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: { firebaseUid: firebaseUser.uid },
+          });
+        }
+      }
+
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado.');
+      }
+
+      const { password, refresh_token, ...result } = user;
+      return result as User;
+    } catch (error) {
+      throw new UnauthorizedException('Falha na autenticação com o Firebase.');
+    }
   }
 }

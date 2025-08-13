@@ -55,6 +55,7 @@ enum PublicationStatus {
 
 model User {
   id            String    @id @default(uuid())
+  firebaseUid   String?   @unique
   email         String    @unique
   name          String
   password      String

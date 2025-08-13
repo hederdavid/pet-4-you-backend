@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { Response, Request } from 'express';
 import { AccessTokenGuard } from './guards/access-token.guard';
+import { FirebaseLoginDto } from './dto/firebase-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -26,6 +27,16 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const user = await this.authService.validateUser(loginDto);
+    return this.authService.signin(user, res);
+  }
+
+  @Post('firebase-login')
+  @HttpCode(HttpStatus.OK)
+  async firebaseLogin(
+    @Body() firebaseLoginDto: FirebaseLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = await this.authService.loginWithFirebase(firebaseLoginDto.token);
     return this.authService.signin(user, res);
   }
 
