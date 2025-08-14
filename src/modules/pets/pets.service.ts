@@ -7,7 +7,7 @@ import { PrismaService } from 'src/plugins/database/services/prisma.service';
 export class PetsService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createPetDto: CreatePetDto) {
+  async create(createPetDto: CreatePetDto, photos: Express.Multer.File[]) {
     return await this.prismaService.pet.create({
       data: {
         name: createPetDto.name,
@@ -21,7 +21,7 @@ export class PetsService {
         publication_date: new Date().toISOString(),
         userId: createPetDto.userId,
         photos: {
-          create: createPetDto.photos.map((photo) => ({ url: photo })),
+          create: photos.map((photo) => ({ url: `/uploads/${photo.filename}` })),
         },
       },
       include: { photos: true },
@@ -54,20 +54,20 @@ export class PetsService {
     return pet;
   }
 
-  async update(id: string, updatePetDto: UpdatePetDto) {
+  async update(id: string, updatePetDto: UpdatePetDto, photos: Express.Multer.File[]) {
     await this.findOne(id);
 
-    const { photos, ...petData } = updatePetDto;
+    const { userId, ...updateData } = updatePetDto;
 
     return await this.prismaService.pet.update({
       where: { id },
       data: {
-        ...petData,
-        ...(photos
+        ...updateData,
+        ...(photos && photos.length > 0
           ? {
               photos: {
                 deleteMany: { deletedAt: null },
-                create: photos.map((url) => ({ url })),
+                create: photos.map((photo) => ({ url: `/uploads/${photo.filename}` })),
               },
             }
           : {}),
@@ -91,4 +91,15 @@ export class PetsService {
       data: { deletedAt: new Date() },
     });
   }
+
+  async findPetsByOwner(ownerId: string) {
+    return await this.prismaService.pet.findMany({
+      where: { userId: ownerId, deletedAt: null },
+      include: {
+        photos: { where: { deletedAt: null } },
+        user: true,
+      },
+    });
+  }
+
 }

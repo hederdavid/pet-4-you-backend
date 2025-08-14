@@ -54,11 +54,6 @@ export class CreatePetDto {
   @IsOptional()
   publication_date: string;
 
-  @IsArray({ message: 'As fotos devem ser enviadas em um array.' })
-  @ArrayMinSize(1, { message: 'O pet deve ter pelo menos uma foto.' })
-  @IsUrl({}, { each: true, message: 'Cada foto deve ser uma URL válida.' })
-  photos: string[];
-
   @IsUUID('all', { message: 'O userId deve ser um UUID válido.' })
   @IsNotEmpty({ message: 'O userId é obrigatório.' })
   userId: string;
