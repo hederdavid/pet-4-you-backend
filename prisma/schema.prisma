@@ -48,7 +48,7 @@ enum PetAge {
 }
 
 enum PublicationStatus {
-  APROVED
+  APPROVED
   REJECTED
   PENDING
 }
