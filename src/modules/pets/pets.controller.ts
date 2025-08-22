@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
@@ -17,6 +18,7 @@ import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { PaginatePetDto } from './dto/paginate-pet.dto';
 
 @Controller('pets')
 export class PetsController {
@@ -43,8 +45,16 @@ export class PetsController {
   }
 
   @Get()
-  findAll() {
-    return this.petsService.findAll();
+  findAll(@Query() queryParams?: PaginatePetDto) {
+    const { page, itemsPerPage, name, pet_status, publication_status } =
+      queryParams || {};
+    return this.petsService.findAll(
+      page,
+      itemsPerPage,
+      name,
+      pet_status,
+      publication_status,
+    );
   }
 
   @Get(':id')
@@ -81,7 +91,16 @@ export class PetsController {
 
   @UseGuards(AccessTokenGuard)
   @Get('/user/:id')
-  findByOwner(@Param('id') id: string) {
-    return this.petsService.findPetsByOwner(id);
+  findByOwner(@Param('id') id: string, @Query() queryParams?: PaginatePetDto) {
+    const { page, itemsPerPage, name, pet_status, publication_status } =
+      queryParams || {};
+    return this.petsService.findPetsByOwner(
+      id,
+      page,
+      itemsPerPage,
+      name,
+      pet_status,
+      publication_status,
+    );
   }
 }

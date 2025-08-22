@@ -1,11 +1,21 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
+import { PetStatus, PublicationStatus } from 'generated/prisma';
+import { PaginateService } from 'src/shared/services/paginate.service';
 
 @Injectable()
 export class PetsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly paginateService: PaginateService,
+  ) {}
 
   async create(createPetDto: CreatePetDto, photos: Express.Multer.File[]) {
     return await this.prismaService.pet.create({
@@ -21,21 +31,93 @@ export class PetsService {
         publication_date: new Date().toISOString(),
         userId: createPetDto.userId,
         photos: {
-          create: photos.map((photo) => ({ url: `/uploads/${photo.filename}` })),
+          create: photos.map((photo) => ({
+            url: `/uploads/${photo.filename}`,
+          })),
         },
       },
       include: { photos: true },
     });
   }
 
-  async findAll() {
-    return await this.prismaService.pet.findMany({
-      where: { deletedAt: null },
-      include: {
-        photos: { where: { deletedAt: null } },
-        user: true,
-      },
-    });
+  async findAll(
+    page?: number,
+    itemsPerPage?: number,
+    name?: string,
+    pet_status?: PetStatus,
+    publication_status?: PublicationStatus,
+  ) {
+    page = page ?? 1;
+    itemsPerPage = itemsPerPage ?? 10;
+
+    try {
+      let querys = {};
+
+      if (name) {
+        querys = Object.assign(querys, {
+          name: {
+            contains: name,
+            mode: 'insensitive',
+          },
+        });
+      }
+
+      if (pet_status) {
+        querys = Object.assign(querys, {
+          pet_status: {
+            equals: pet_status,
+          },
+        });
+      }
+
+      if (publication_status) {
+        querys = Object.assign(querys, {
+          publication_status: {
+            equals: publication_status,
+          },
+        });
+      }
+
+      querys = Object.assign(querys, {
+        deletedAt: null,
+      });
+
+      if (page && itemsPerPage && querys) {
+        return this.paginateService.paginate({
+          module: 'pet',
+          page,
+          itemsPerPage,
+          querys,
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            age: true,
+            size: true,
+            gender: true,
+            pet_status: true,
+            publication_status: true,
+            publication_date: true,
+            userId: true,
+            photos: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+            user: true,
+          },
+        });
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        `Erro ao listar pets. ${error.message}`,
+      );
+    }
   }
 
   async findOne(id: string) {
@@ -48,13 +130,19 @@ export class PetsService {
     });
 
     if (!pet) {
-      throw new NotFoundException(`Pet com id ${id} não encontrado ou foi removido.`);
+      throw new NotFoundException(
+        `Pet com id ${id} não encontrado ou foi removido.`,
+      );
     }
 
     return pet;
   }
 
-  async update(id: string, updatePetDto: UpdatePetDto, photos: Express.Multer.File[]) {
+  async update(
+    id: string,
+    updatePetDto: UpdatePetDto,
+    photos: Express.Multer.File[],
+  ) {
     await this.findOne(id);
 
     const { userId, ...updateData } = updatePetDto;
@@ -67,7 +155,9 @@ export class PetsService {
           ? {
               photos: {
                 deleteMany: { deletedAt: null },
-                create: photos.map((photo) => ({ url: `/uploads/${photo.filename}` })),
+                create: photos.map((photo) => ({
+                  url: `/uploads/${photo.filename}`,
+                })),
               },
             }
           : {}),
@@ -80,7 +170,7 @@ export class PetsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    
+
     await this.prismaService.photo.updateMany({
       where: { petId: id, deletedAt: null },
       data: { deletedAt: new Date() },
@@ -92,14 +182,91 @@ export class PetsService {
     });
   }
 
-  async findPetsByOwner(ownerId: string) {
-    return await this.prismaService.pet.findMany({
-      where: { userId: ownerId, deletedAt: null },
-      include: {
-        photos: { where: { deletedAt: null } },
-        user: true,
-      },
-    });
-  }
+  async findPetsByOwner(
+    ownerId: string,
+    page?: number,
+    itemsPerPage?: number,
+    name?: string,
+    pet_status?: PetStatus,
+    publication_status?: PublicationStatus,
+  ) {
+    page = page ?? 1;
+    itemsPerPage = itemsPerPage ?? 10;
 
+    try {
+      let querys = {};
+
+      if (ownerId) {
+        querys = Object.assign(querys, {
+          userId: {
+            equals: ownerId,
+          },
+        });
+      }
+
+      if (name) {
+        querys = Object.assign(querys, {
+          name: {
+            contains: name,
+            mode: 'insensitive',
+          },
+        });
+      }
+
+      if (pet_status) {
+        querys = Object.assign(querys, {
+          pet_status: {
+            equals: pet_status,
+          },
+        });
+      }
+
+      if (publication_status) {
+        querys = Object.assign(querys, {
+          publication_status: {
+            equals: publication_status,
+          },
+        });
+      }
+
+      querys = Object.assign(querys, {
+        deletedAt: null,
+      });
+
+      if (page && itemsPerPage && querys) {
+        return this.paginateService.paginate({
+          module: 'pet',
+          page,
+          itemsPerPage,
+          querys,
+          select: {
+            id: true,
+            name: true,
+            species: true,
+            age: true,
+            size: true,
+            gender: true,
+            pet_status: true,
+            publication_status: true,
+            publication_date: true,
+            userId: true,
+            photos: {
+              select: {
+                id: true,
+                url: true,
+              },
+            },
+          },
+        });
+      }
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(
+        `Erro ao listar pets. ${error.message}`,
+      );
+    }
+  }
 }
