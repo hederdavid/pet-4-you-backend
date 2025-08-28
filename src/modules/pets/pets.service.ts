@@ -17,7 +17,7 @@ export class PetsService {
     private readonly paginateService: PaginateService,
   ) {}
 
-  async create(createPetDto: CreatePetDto, photos: Express.Multer.File[]) {
+  async create(createPetDto: CreatePetDto) {
     return await this.prismaService.pet.create({
       data: {
         name: createPetDto.name,
@@ -26,13 +26,10 @@ export class PetsService {
         age: createPetDto.age,
         size: createPetDto.size,
         gender: createPetDto.gender,
-        pet_status: 'AVAILABLE',
-        publication_status: 'PENDING',
-        publication_date: new Date().toISOString(),
         userId: createPetDto.userId,
         photos: {
-          create: photos.map((photo) => ({
-            url: `/uploads/${photo.filename}`,
+          create: createPetDto.photos.map((photoUrl) => ({
+            url: photoUrl,
           })),
         },
       },
@@ -138,14 +135,10 @@ export class PetsService {
     return pet;
   }
 
-  async update(
-    id: string,
-    updatePetDto: UpdatePetDto,
-    photos: Express.Multer.File[],
-  ) {
+  async update(id: string, updatePetDto: UpdatePetDto) {
     await this.findOne(id);
 
-    const { userId, ...updateData } = updatePetDto;
+    const { userId, photos, ...updateData } = updatePetDto;
 
     return await this.prismaService.pet.update({
       where: { id },
@@ -154,9 +147,9 @@ export class PetsService {
         ...(photos && photos.length > 0
           ? {
               photos: {
-                deleteMany: { deletedAt: null },
-                create: photos.map((photo) => ({
-                  url: `/uploads/${photo.filename}`,
+                deleteMany: {},
+                create: photos.map((photoUrl) => ({
+                  url: photoUrl,
                 })),
               },
             }

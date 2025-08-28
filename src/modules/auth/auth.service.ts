@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
@@ -130,14 +131,14 @@ export class AuthService {
   ) {
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
     });
   }
 
@@ -153,19 +154,16 @@ export class AuthService {
         );
       }
 
-      // Tenta encontrar um usuário pelo UID do Firebase
       let user = await this.prisma.user.findUnique({
         where: { firebaseUid: firebaseUser.uid },
       });
 
-      // Se não encontrar pelo UID, tenta pelo número de telefone para vincular a conta
       if (!user) {
         const phone = firebaseUser.phone_number.replace('+55', '');
         user = await this.prisma.user.findFirst({
           where: { phone },
         });
 
-        // Se encontrou pelo telefone, atualiza com o firebaseUid
         if (user) {
           user = await this.prisma.user.update({
             where: { id: user.id },
@@ -182,6 +180,19 @@ export class AuthService {
       return result as User;
     } catch (error) {
       throw new UnauthorizedException('Falha na autenticação com o Firebase.');
+    }
+  }
+
+  async getFirebaseToken(userId: string): Promise<string> {
+    try {
+      const firebaseToken = await this.firebaseService
+        .getAuth()
+        .createCustomToken(userId);
+      return firebaseToken;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Falha ao gerar token do Firebase.',
+      );
     }
   }
 }

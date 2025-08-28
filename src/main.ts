@@ -1,9 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser'; // 1. Importe o cookie-parser
+import * as cookieParser from 'cookie-parser';
 
-// Configurar timezone para o Brasil
 process.env.TZ = 'America/Sao_Paulo';
 
 async function bootstrap() {
@@ -13,7 +12,7 @@ async function bootstrap() {
   const ssl = process.env.SSL === 'true';
 
   app.enableCors({
-    origin: 'http://localhost:9001',
+    origin: process.env.FRONTEND_URL || 'http://localhost:9001',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

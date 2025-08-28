@@ -1,10 +1,9 @@
-// src/firebase/firebase.module.ts
 import { Global, Module } from '@nestjs/common';
 import { FirebaseService } from './firebase.service';
 
-@Global() // Torna o módulo global
+@Global()
 @Module({
   providers: [FirebaseService],
-  exports: [FirebaseService], // Exporta o serviço para ser usado em outros módulos
+  exports: [FirebaseService],
 })
 export class FirebaseModule {}

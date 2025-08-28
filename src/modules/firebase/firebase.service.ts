@@ -1,5 +1,3 @@
-// hederdavid/pet-4-you-backend/src/firebase/firebase.service.ts
-
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
@@ -11,27 +9,31 @@ export class FirebaseService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    // Monta o objeto da conta de serviço a partir das variáveis de ambiente
     const serviceAccount = {
-      type: this.configService.get<string>('FIREBASE_TYPE'),
-      projectId: this.configService.get<string>('FIREBASE_PROJECT_ID'),
-      privateKeyId: this.configService.get<string>('FIREBASE_PRIVATE_KEY_ID'),
-      privateKey: this.configService.get<string>('FIREBASE_PRIVATE_KEY', '').replace(/\\n/g, '\n'),
-      clientEmail: this.configService.get<string>('FIREBASE_CLIENT_EMAIL'),
-      clientId: this.configService.get<string>('FIREBASE_CLIENT_ID'),
-      authUri: this.configService.get<string>('FIREBASE_AUTH_URI'),
-      tokenUri: this.configService.get<string>('FIREBASE_TOKEN_URI'),
-      authProviderX509CertUrl: this.configService.get<string>('FIREBASE_AUTH_PROVIDER_X509_CERT_URL'),
-      clientC509CertUrl: this.configService.get<string>('FIREBASE_CLIENT_X509_CERT_URL'),
+      type: this.configService.get<string>('FB_ADMIN_TYPE'),
+      project_id: this.configService.get<string>('FB_ADMIN_PROJECT_ID'),
+      private_key_id: this.configService.get<string>('FB_ADMIN_PRIVATE_KEY_ID'),
+      private_key: this.configService
+        .get<string>('FB_ADMIN_PRIVATE_KEY', '')
+        .replace(/\\n/g, '\n'),
+      client_email: this.configService.get<string>('FB_ADMIN_CLIENT_EMAIL'),
+      client_id: this.configService.get<string>('FB_ADMIN_CLIENT_ID'),
+      auth_uri: this.configService.get<string>('FB_ADMIN_AUTH_URI'),
+      token_uri: this.configService.get<string>('FB_ADMIN_TOKEN_URI'),
+      auth_provider_x509_cert_url: this.configService.get<string>(
+        'FB_ADMIN_AUTH_PROVIDER_X509_CERT_URL',
+      ),
+      client_x509_cert_url: this.configService.get<string>(
+        'FB_ADMIN_CLIENT_X509_CERT_URL',
+      ),
     } as admin.ServiceAccount;
 
-    // Inicializa o app do Firebase se ainda não foi inicializado
     if (admin.apps.length === 0) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
     }
-    
+
     this.auth = admin.auth();
   }
 

@@ -1,5 +1,3 @@
-// src/modules/auth/strategies/refresh-token.strategy.ts
-
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
@@ -21,9 +19,13 @@ export class RefreshTokenStrategy extends PassportStrategy(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
-    const refreshTokenSecret = configService.get<string>('auth.refreshTokenSecret');
+    const refreshTokenSecret = configService.get<string>(
+      'auth.refreshTokenSecret',
+    );
     if (!refreshTokenSecret) {
-      throw new Error('REFRESH_TOKEN_SECRET not found in environment variables');
+      throw new Error(
+        'REFRESH_TOKEN_SECRET not found in environment variables',
+      );
     }
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([

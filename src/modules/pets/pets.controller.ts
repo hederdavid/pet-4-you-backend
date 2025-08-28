@@ -7,17 +7,12 @@ import {
   Param,
   Delete,
   UseGuards,
-  UseInterceptors,
-  UploadedFiles,
   Query,
 } from '@nestjs/common';
 import { PetsService } from './pets.service';
 import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
 import { PaginatePetDto } from './dto/paginate-pet.dto';
 
 @Controller('pets')
@@ -25,23 +20,9 @@ export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(
-    FilesInterceptor('photos', 5, {
-      storage: diskStorage({
-        destination: '../pet-4-you-frontend/public/uploads', // pasta onde vai salvar
-        filename: (req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-    }),
-  )
   @Post()
-  create(
-    @Body() createPetDto: CreatePetDto,
-    @UploadedFiles() photos: Express.Multer.File[],
-  ) {
-    return this.petsService.create(createPetDto, photos);
+  create(@Body() createPetDto: CreatePetDto) {
+    return this.petsService.create(createPetDto);
   }
 
   @Get()
@@ -63,24 +44,9 @@ export class PetsController {
   }
 
   @UseGuards(AccessTokenGuard)
-  @UseInterceptors(
-    FilesInterceptor('photos', 5, {
-      storage: diskStorage({
-        destination: '../pet-4-you-frontend/public/uploads', // pasta onde vai salvar
-        filename: (req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-    }),
-  )
   @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updatePetDto: UpdatePetDto,
-    @UploadedFiles() photos: Express.Multer.File[],
-  ) {
-    return this.petsService.update(id, updatePetDto, photos);
+  update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
+    return this.petsService.update(id, updatePetDto);
   }
 
   @UseGuards(AccessTokenGuard)

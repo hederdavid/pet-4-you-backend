@@ -36,7 +36,9 @@ export class AuthController {
     @Body() firebaseLoginDto: FirebaseLoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const user = await this.authService.loginWithFirebase(firebaseLoginDto.token);
+    const user = await this.authService.loginWithFirebase(
+      firebaseLoginDto.token,
+    );
     return this.authService.signin(user, res);
   }
 
@@ -60,5 +62,14 @@ export class AuthController {
   @Get('profile')
   getProfile(@Req() req: Request) {
     return req.user;
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('firebase-token')
+  @HttpCode(HttpStatus.OK)
+  async getFirebaseToken(@Req() req) {
+    const userId = req.user.userId;
+    const token = await this.authService.getFirebaseToken(userId);
+    return { token };
   }
 }

@@ -8,6 +8,14 @@
   <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
   <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase" />
 </p>
+<p align="center">
+  <a href="https://pet-4-you-frontend.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/🚀_Ver_Demo-FF6B35?style=for-the-badge&logoColor=white" alt="Ver Demo" />
+  </a>
+  <a href="https://github.com/hederdavid/pet-4-you-frontend" target="_blank">
+    <img src="https://img.shields.io/badge/🔗_Frontend-1976D2?style=for-the-badge&logoColor=white" alt="Frontend" />
+  </a>
+</p>
 
 ## 📋 Sobre o Projeto
 

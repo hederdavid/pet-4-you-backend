@@ -36,9 +36,7 @@ export class UsersService {
       where: { id, deletedAt: null },
     });
     if (!user) {
-      throw new NotFoundException(
-        `Usuário com id ${id} não encontrado.`,
-      );
+      throw new NotFoundException(`Usuário com id ${id} não encontrado.`);
     }
     return user;
   }
@@ -46,7 +44,7 @@ export class UsersService {
   async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
 
-    if (updateUserDto.email && updateUserDto  != user.email) {
+    if (updateUserDto.email && updateUserDto.email != user.email) {
       await this._checkEmailExists(updateUserDto.email);
     }
 
