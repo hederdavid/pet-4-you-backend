@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreatePetDto } from './dto/create-pet.dto';
@@ -9,32 +11,49 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { PetStatus, PublicationStatus } from 'generated/prisma';
 import { PaginateService } from 'src/shared/services/paginate.service';
+import { CreatePetResponseDto } from './dto/responses-pets.dto';
+import { PrismaClientKnownRequestError } from 'generated/prisma/runtime/library';
 
 @Injectable()
 export class PetsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly paginateService: PaginateService,
+    private readonly logger: Logger
   ) {}
 
-  async create(createPetDto: CreatePetDto) {
-    return await this.prismaService.pet.create({
-      data: {
-        name: createPetDto.name,
-        description: createPetDto.description,
-        species: createPetDto.species,
-        age: createPetDto.age,
-        size: createPetDto.size,
-        gender: createPetDto.gender,
-        userId: createPetDto.userId,
-        photos: {
-          create: createPetDto.photos.map((photoUrl) => ({
-            url: photoUrl,
-          })),
+  async create(createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
+    try {
+      const pet = await this.prismaService.pet.create({
+        data: {
+          name: createPetDto.name,
+          description: createPetDto.description,
+          species: createPetDto.species,
+          age: createPetDto.age,
+          size: createPetDto.size,
+          gender: createPetDto.gender,
+          userId: createPetDto.userId,
+          photos: {
+            create: createPetDto.photos.map((photoUrl) => ({
+              url: photoUrl,
+            })),
+          },
         },
-      },
-      include: { photos: true },
-    });
+        include: { photos: true },
+      });
+
+      return new CreatePetResponseDto(201, 'Pet criado com sucesso!', pet);
+    } catch (error) {
+      this.logger.error(error);
+
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Já existe um pet com estes dados.');
+        }
+      }
+
+      throw new InternalServerErrorException('Não foi possível criar o pet.');
+    }
   }
 
   async findAll(

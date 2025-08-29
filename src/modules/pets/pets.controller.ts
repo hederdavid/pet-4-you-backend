@@ -14,14 +14,20 @@ import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PaginatePetDto } from './dto/paginate-pet.dto';
+import { ApiCreateOperation } from 'src/common/documentation';
+import { CreatePetResponseDto } from './dto/responses-pets.dto';
 
 @Controller('pets')
 export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
+  @ApiCreateOperation({
+    summary: 'Cria um novo pet.',
+    description: 'Cria um novo pet com as informações fornecidas.'
+  }, CreatePetResponseDto)
   @UseGuards(AccessTokenGuard)
   @Post()
-  create(@Body() createPetDto: CreatePetDto) {
+  create(@Body() createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
     return this.petsService.create(createPetDto);
   }
 
