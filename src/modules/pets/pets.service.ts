@@ -11,7 +11,7 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { PetStatus, PublicationStatus } from 'generated/prisma';
 import { PaginateService } from 'src/shared/services/paginate.service';
-import { CreatePetResponseDto } from './dto/responses-pets.dto';
+import { CreatePetResponseDto, SearchAllPetsResponseDto } from './dto/responses-pets.dto';
 import { PrismaClientKnownRequestError } from 'generated/prisma/runtime/library';
 
 @Injectable()
@@ -42,7 +42,12 @@ export class PetsService {
         include: { photos: true },
       });
 
-      return new CreatePetResponseDto(201, 'Pet criado com sucesso!', pet);
+      return {
+        statusCode: 201,
+        message: 'Pet criado com sucesso!',
+        data: pet,
+      };
+
     } catch (error) {
       this.logger.error(error);
 
@@ -62,7 +67,7 @@ export class PetsService {
     name?: string,
     pet_status?: PetStatus,
     publication_status?: PublicationStatus,
-  ) {
+  ): Promise<SearchAllPetsResponseDto> {
     page = page ?? 1;
     itemsPerPage = itemsPerPage ?? 10;
 
@@ -98,33 +103,38 @@ export class PetsService {
         deletedAt: null,
       });
 
-      if (page && itemsPerPage && querys) {
-        return this.paginateService.paginate({
-          module: 'pet',
-          page,
-          itemsPerPage,
-          querys,
-          select: {
-            id: true,
-            name: true,
-            species: true,
-            age: true,
-            size: true,
-            gender: true,
-            pet_status: true,
-            publication_status: true,
-            publication_date: true,
-            userId: true,
-            photos: {
-              select: {
-                id: true,
-                url: true,
-              },
+      const pets = await this.paginateService.paginate({
+        module: 'pet',
+        page,
+        itemsPerPage,
+        querys,
+        select: {
+          id: true,
+          name: true,
+          species: true,
+          age: true,
+          size: true,
+          gender: true,
+          pet_status: true,
+          publication_status: true,
+          publication_date: true,
+          userId: true,
+          photos: {
+            select: {
+              id: true,
+              url: true,
             },
-            user: true,
           },
-        });
-      }
+          user: true,
+        },
+      });
+
+      return {
+        statusCode: 200,
+        message: 'Pets encontrados com sucesso!',
+        pets: pets.items,
+        meta: pets.meta,
+      };
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;

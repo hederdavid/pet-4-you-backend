@@ -7,7 +7,6 @@ import {
   PetStatus,
   PublicationStatus,
 } from 'generated/prisma';
-import { ApiResponseDto } from 'src/shared/dtos/api-response.dto';
 
 export class PhotoResponseDto {
   @ApiProperty({ example: '00e8fcd5-ccec-4c56-998a-0d5a5396154e' })
@@ -66,9 +65,15 @@ export class PetResponseDto {
   photos: PhotoResponseDto[];
 }
 
-export class CreatePetResponseDto extends ApiResponseDto<PetResponseDto> {
+export class CreatePetResponseDto {
+  @ApiProperty({ example: 201 })
+  readonly statusCode: number;
+
+  @ApiProperty({ example: 'Pet criado com sucesso!' })
+  readonly message: string;
+
   @ApiProperty({ type: PetResponseDto })
-  declare data: PetResponseDto;
+  readonly data: PetResponseDto;
 }
 
 export class UpdatePetResponseDto {
@@ -100,6 +105,18 @@ export class SearchAllPetsResponseDto {
   @ApiProperty({ type: [PetResponseDto] })
   readonly pets: PetResponseDto[];
 
-  @ApiProperty({ example: 6 })
-  readonly maxPag: number;
+  @ApiProperty({
+    example: {
+      totalItems: 100,
+      totalPages: 10,
+      currentPage: 1,
+      itemsPerPage: 10,
+    },
+  })
+  readonly meta: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    itemsPerPage: number;
+  };
 }

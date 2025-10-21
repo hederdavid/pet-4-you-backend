@@ -7,6 +7,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { HashingServiceProtocol } from '../auth/hash/hashing.service';
+import { UserResponseDto } from './dto/responses-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -15,8 +16,8 @@ export class UsersService {
     private readonly hashingService: HashingServiceProtocol,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
-    await this._validateUser(createUserDto);
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    await this._validateUser(createUserDto.email, createUserDto.phone);
     createUserDto.password = await this.hashingService.hash(
       createUserDto.password,
     );
@@ -25,13 +26,13 @@ export class UsersService {
     });
   }
 
-  async findAll() {
+  async findAll(): Promise<UserResponseDto[]> {
     return await this.prismaService.user.findMany({
       where: { deletedAt: null },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<UserResponseDto> {
     const user = await this.prismaService.user.findFirst({
       where: { id, deletedAt: null },
     });
@@ -41,16 +42,10 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
     const user = await this.findOne(id);
 
-    if (updateUserDto.email && updateUserDto.email != user.email) {
-      await this._checkEmailExists(updateUserDto.email);
-    }
-
-    if (updateUserDto.phone && updateUserDto.phone != user.phone) {
-      await this._checkPhoneExists(updateUserDto.phone);
-    }
+    await this._validateUser(updateUserDto?.email, updateUserDto?.phone);
 
     if (updateUserDto.password) {
       updateUserDto.password = await this.hashingService.hash(
@@ -80,9 +75,9 @@ export class UsersService {
     });
   }
 
-  private async _validateUser(createUserDto: CreateUserDto) {
-    await this._checkEmailExists(createUserDto.email);
-    await this._checkPhoneExists(createUserDto.phone);
+  private async _validateUser(email?: string, phone?: string) {
+    if (email) await this._checkEmailExists(email);
+    if (phone) await this._checkPhoneExists(phone);
   }
 
   private async _checkEmailExists(email: string) {

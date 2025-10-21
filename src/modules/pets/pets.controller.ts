@@ -15,7 +15,7 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PaginatePetDto } from './dto/paginate-pet.dto';
 import { ApiCreateOperation } from 'src/common/documentation';
-import { CreatePetResponseDto } from './dto/responses-pets.dto';
+import { CreatePetResponseDto, SearchAllPetsResponseDto } from './dto/responses-pets.dto';
 
 @Controller('pets')
 export class PetsController {
@@ -27,15 +27,15 @@ export class PetsController {
   }, CreatePetResponseDto)
   @UseGuards(AccessTokenGuard)
   @Post()
-  create(@Body() createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
-    return this.petsService.create(createPetDto);
+  async create(@Body() createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
+    return await this.petsService.create(createPetDto);
   }
 
   @Get()
-  findAll(@Query() queryParams?: PaginatePetDto) {
+  async findAll(@Query() queryParams?: PaginatePetDto): Promise<SearchAllPetsResponseDto> {
     const { page, itemsPerPage, name, pet_status, publication_status } =
       queryParams || {};
-    return this.petsService.findAll(
+    return await this.petsService.findAll(
       page,
       itemsPerPage,
       name,
