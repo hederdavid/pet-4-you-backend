@@ -31,7 +31,6 @@ export class PaginateService {
     try {
       const totalItems = await this.prisma[module].count({ where: querys });
 
-      // Otimizado para retornar a estrutura completa mesmo quando não há itens
       if (totalItems === 0) {
         return {
           items: [],
@@ -66,9 +65,8 @@ export class PaginateService {
         itemsPerPage === -1 ? 1 : Math.ceil(totalItems / itemsPerPage);
 
       return {
-        items, // 1. Renomeado de "data" para "items"
+        items,
         meta: {
-          // 2. Agrupado metadados de paginação
           totalItems,
           itemsPerPage: itemsPerPage === -1 ? totalItems : itemsPerPage,
           totalPages,
