@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from 'generated/prisma';
+import { PaginationMetaDto } from 'src/common/dto/pagination-meta.dto';
 import { PetResponseDto } from 'src/modules/pets/dto/responses-pets.dto';
 
 export class UserResponseDto {
@@ -48,6 +49,9 @@ export class FindAllUsersResponseDto {
 
   @ApiProperty({ type: [UserResponseDto] })
   readonly users: UserResponseDto[];
+
+  @ApiProperty({ type: PaginationMetaDto })
+  readonly meta: PaginationMetaDto;
 }
 
 export class FindOneUserResponseDto {
