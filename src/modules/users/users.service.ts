@@ -8,12 +8,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { HashingServiceProtocol } from '../auth/hash/hashing.service';
 import { UserResponseDto } from './dto/responses-user.dto';
+import { PaginateService } from 'src/shared/services/paginate.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly hashingService: HashingServiceProtocol,
+    private readonly paginateService: PaginateService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
@@ -26,9 +28,35 @@ export class UsersService {
     });
   }
 
-  async findAll(): Promise<UserResponseDto[]> {
-    return await this.prismaService.user.findMany({
-      where: { deletedAt: null },
+  async findAll(
+    page?: number,
+    itemsPerPage?: number,
+    name?: string,
+    role?: string,
+  ) {
+    page = page ?? 1;
+    itemsPerPage = itemsPerPage ?? 10;
+    let querys: any = {};
+
+    if (name) querys.name = { contains: name, mode: 'insensitive' };
+    if (role) querys.filter = { field: 'role', value: role };
+    
+    return await this.paginateService.paginate({
+      module: 'user',
+      page,
+      itemsPerPage,
+      querys,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        city: true,
+        state: true,
+        phone: true,
+        role: true,
+        pets: true,
+      }
     });
   }
 
@@ -42,7 +70,10 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
     const user = await this.findOne(id);
 
     await this._validateUser(updateUserDto?.email, updateUserDto?.phone);

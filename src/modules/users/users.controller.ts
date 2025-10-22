@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -20,6 +21,7 @@ import {
   RemoveUserResponseDto,
   UpdateUserResponseDto,
 } from './dto/responses-user.dto';
+import { PaginateUserDto } from './dto/paginate-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -46,12 +48,21 @@ export class UsersController {
 
   @UseGuards(AccessTokenGuard)
   @Get()
-  async findAll(): Promise<FindAllUsersResponseDto> {
-    const users = await this.usersService.findAll();
+  async findAll(
+    @Query() queryParams?: PaginateUserDto,
+  ): Promise<FindAllUsersResponseDto> {
+    const { page, itemsPerPage, name, role } = queryParams || {};
+    const { items: users, meta } = await this.usersService.findAll(
+      page,
+      itemsPerPage,
+      name,
+      role,
+    );
     return {
       statusCode: 200,
       message: 'Usuários retornados com sucesso.',
       users,
+      meta,
     };
   }
 
