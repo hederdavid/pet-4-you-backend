@@ -4,6 +4,7 @@ import * as functions from 'firebase-functions/v1';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import * as express from 'express';
 import * as cookieParser from 'cookie-parser';
+import { ValidationPipe } from '@nestjs/common';
 
 let server: express.Express;
 
@@ -19,6 +20,14 @@ const createNestServer = async (expressInstance: express.Express) => {
     credentials: true,
   });
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   return app.init();
 };
 
@@ -32,6 +41,6 @@ export const api = functions
       await createNestServer(server);
       console.log('Nest server initialized.');
     }
-    
+
     return server(request, response);
   });
