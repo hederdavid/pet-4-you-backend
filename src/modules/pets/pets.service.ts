@@ -11,7 +11,11 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { PrismaService } from 'src/plugins/database/services/prisma.service';
 import { PetStatus, PublicationStatus } from 'generated/prisma';
 import { PaginateService } from 'src/shared/services/paginate.service';
-import { CreatePetResponseDto, SearchAllPetsResponseDto } from './dto/responses-pets.dto';
+import {
+  CreatePetResponseDto,
+  FindAllPetsResponseDto,
+  PetResponseDto,
+} from './dto/responses-pets.dto';
 import { PrismaClientKnownRequestError } from 'generated/prisma/runtime/library';
 
 @Injectable()
@@ -19,7 +23,7 @@ export class PetsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly paginateService: PaginateService,
-    private readonly logger: Logger
+    private readonly logger: Logger,
   ) {}
 
   async create(createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
@@ -47,7 +51,6 @@ export class PetsService {
         message: 'Pet criado com sucesso!',
         data: pet,
       };
-
     } catch (error) {
       this.logger.error(error);
 
@@ -67,7 +70,7 @@ export class PetsService {
     name?: string,
     pet_status?: PetStatus,
     publication_status?: PublicationStatus,
-  ): Promise<SearchAllPetsResponseDto> {
+  ): Promise<FindAllPetsResponseDto> {
     page = page ?? 1;
     itemsPerPage = itemsPerPage ?? 10;
 
@@ -125,7 +128,16 @@ export class PetsService {
               url: true,
             },
           },
-          user: true,
+          user: {
+            select: {
+              name: true,
+              email: true,
+              city: true,
+              state: true,
+              phone: true,
+              role: true,
+            }
+          }
         },
       });
 
@@ -146,7 +158,7 @@ export class PetsService {
     }
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<PetResponseDto> {
     const pet = await this.prismaService.pet.findFirst({
       where: { id, deletedAt: null },
       include: {
@@ -164,7 +176,10 @@ export class PetsService {
     return pet;
   }
 
-  async update(id: string, updatePetDto: UpdatePetDto) {
+  async update(
+    id: string,
+    updatePetDto: UpdatePetDto,
+  ): Promise<PetResponseDto> {
     await this.findOne(id);
 
     const { userId, photos, ...updateData } = updatePetDto;
@@ -190,7 +205,7 @@ export class PetsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<PetResponseDto> {
     await this.findOne(id);
 
     await this.prismaService.photo.updateMany({
@@ -201,6 +216,7 @@ export class PetsService {
     return await this.prismaService.pet.update({
       where: { id },
       data: { deletedAt: new Date() },
+      include: { photos: true },
     });
   }
 

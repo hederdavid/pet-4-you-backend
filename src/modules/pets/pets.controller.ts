@@ -15,24 +15,37 @@ import { UpdatePetDto } from './dto/update-pet.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PaginatePetDto } from './dto/paginate-pet.dto';
 import { ApiCreateOperation } from 'src/common/documentation';
-import { CreatePetResponseDto, SearchAllPetsResponseDto } from './dto/responses-pets.dto';
+import {
+  CreatePetResponseDto,
+  FindAllPetsResponseDto,
+  FindOnePetResponseDto,
+  RemovePetResponseDto,
+  UpdatePetResponseDto,
+} from './dto/responses-pets.dto';
 
 @Controller('pets')
 export class PetsController {
   constructor(private readonly petsService: PetsService) {}
 
-  @ApiCreateOperation({
-    summary: 'Cria um novo pet.',
-    description: 'Cria um novo pet com as informações fornecidas.'
-  }, CreatePetResponseDto)
+  @ApiCreateOperation(
+    {
+      summary: 'Cria um novo pet.',
+      description: 'Cria um novo pet com as informações fornecidas.',
+    },
+    CreatePetResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Post()
-  async create(@Body() createPetDto: CreatePetDto): Promise<CreatePetResponseDto> {
+  async create(
+    @Body() createPetDto: CreatePetDto,
+  ): Promise<CreatePetResponseDto> {
     return await this.petsService.create(createPetDto);
   }
 
   @Get()
-  async findAll(@Query() queryParams?: PaginatePetDto): Promise<SearchAllPetsResponseDto> {
+  async findAll(
+    @Query() queryParams?: PaginatePetDto,
+  ): Promise<FindAllPetsResponseDto> {
     const { page, itemsPerPage, name, pet_status, publication_status } =
       queryParams || {};
     return await this.petsService.findAll(
@@ -45,20 +58,37 @@ export class PetsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.petsService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<FindOnePetResponseDto> {
+    const pet = await this.petsService.findOne(id);
+    return {
+      statusCode: 200,
+      message: 'Pet encontrado com sucesso!',
+      pet,
+    };
   }
 
   @UseGuards(AccessTokenGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePetDto: UpdatePetDto) {
-    return this.petsService.update(id, updatePetDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updatePetDto: UpdatePetDto,
+  ): Promise<UpdatePetResponseDto> {
+    const updatedPet = await this.petsService.update(id, updatePetDto);
+    return {
+      statusCode: 200,
+      message: 'Pet atualizado com sucesso!',
+      pet: updatedPet,
+    };
   }
 
   @UseGuards(AccessTokenGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.petsService.remove(id);
+  async remove(@Param('id') id: string): Promise<RemovePetResponseDto> {
+    await this.petsService.remove(id);
+    return {
+      statusCode: 200,
+      message: 'Pet deletado com sucesso!',
+    };
   }
 
   @UseGuards(AccessTokenGuard)

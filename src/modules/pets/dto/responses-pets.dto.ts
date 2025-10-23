@@ -7,8 +7,9 @@ import {
   PetStatus,
   PublicationStatus,
 } from 'generated/prisma';
+import { PaginatePetDto } from './paginate-pet.dto';
 
-export class PhotoResponseDto {
+export class PetPhotoResponseDto {
   @ApiProperty({ example: '00e8fcd5-ccec-4c56-998a-0d5a5396154e' })
   readonly id: string;
 
@@ -61,8 +62,8 @@ export class PetResponseDto {
   @ApiProperty({ example: '00e8fcd5-ccec-4c56-998a-0d5a5396154e' })
   readonly userId: string;
 
-  @ApiProperty({ type: [PhotoResponseDto] })
-  photos: PhotoResponseDto[];
+  @ApiProperty({ type: [PetPhotoResponseDto] })
+  photos: PetPhotoResponseDto[];
 }
 
 export class CreatePetResponseDto {
@@ -76,6 +77,31 @@ export class CreatePetResponseDto {
   readonly data: PetResponseDto;
 }
 
+export class FindAllPetsResponseDto {
+  @ApiProperty({ example: 200 })
+  readonly statusCode: number;
+
+  @ApiProperty({ example: 'Pets encontrados com sucesso!' })
+  readonly message: string;
+
+  @ApiProperty({ type: [PetResponseDto] })
+  readonly pets: PetResponseDto[];
+
+  @ApiProperty({ type: PaginatePetDto })
+  readonly meta: PaginatePetDto;
+}
+
+export class FindOnePetResponseDto {
+  @ApiProperty({ example: 200 })
+  readonly statusCode: number;
+
+  @ApiProperty({ example: 'Pet encontrado com sucesso!' })
+  readonly message: string;
+
+  @ApiProperty({ type: PetResponseDto })
+  readonly pet: PetResponseDto;
+}
+
 export class UpdatePetResponseDto {
   @ApiProperty({ example: 200 })
   readonly statusCode: number;
@@ -87,36 +113,10 @@ export class UpdatePetResponseDto {
   readonly pet: PetResponseDto;
 }
 
-export class DeletePetResponseDto {
+export class RemovePetResponseDto {
   @ApiProperty({ example: 200 })
   readonly statusCode: number;
 
   @ApiProperty({ example: 'Pet deletado com sucesso!' })
   readonly message: string;
-}
-
-export class SearchAllPetsResponseDto {
-  @ApiProperty({ example: 200 })
-  readonly statusCode: number;
-
-  @ApiProperty({ example: 'Pets encontrados com sucesso!' })
-  readonly message: string;
-
-  @ApiProperty({ type: [PetResponseDto] })
-  readonly pets: PetResponseDto[];
-
-  @ApiProperty({
-    example: {
-      totalItems: 100,
-      totalPages: 10,
-      currentPage: 1,
-      itemsPerPage: 10,
-    },
-  })
-  readonly meta: {
-    totalItems: number;
-    totalPages: number;
-    currentPage: number;
-    itemsPerPage: number;
-  };
 }
