@@ -14,7 +14,7 @@ import { CreatePetDto } from './dto/create-pet.dto';
 import { UpdatePetDto } from './dto/update-pet.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
 import { PaginatePetDto } from './dto/paginate-pet.dto';
-import { ApiCreateOperation } from 'src/common/documentation';
+import { ApiCreateOperation, ApiFindOperation, ApiRemoveOperation, ApiUpdateOperation } from 'src/common/documentation';
 import {
   CreatePetResponseDto,
   FindAllPetsResponseDto,
@@ -42,6 +42,14 @@ export class PetsController {
     return await this.petsService.create(createPetDto);
   }
 
+
+  @ApiFindOperation(
+    {
+      summary: 'Retorna uma lista de pets.',
+      description: 'Retorna uma lista paginada de pets com base nos filtros fornecidos.',
+    },
+    FindAllPetsResponseDto,
+  )
   @Get()
   async findAll(
     @Query() queryParams?: PaginatePetDto,
@@ -57,6 +65,13 @@ export class PetsController {
     );
   }
 
+  @ApiFindOperation(
+    {
+      summary: 'Retorna um pet pelo ID.',
+      description: 'Retorna um pet específico com base no ID fornecido.',
+    },
+    FindOnePetResponseDto,
+  )
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<FindOnePetResponseDto> {
     const pet = await this.petsService.findOne(id);
@@ -67,6 +82,13 @@ export class PetsController {
     };
   }
 
+  @ApiUpdateOperation(
+    {
+      summary: 'Atualiza um pet pelo ID.',
+      description: 'Atualiza as informações de um pet específico com base no ID fornecido.',
+    },
+    UpdatePetResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Patch(':id')
   async update(
@@ -81,6 +103,13 @@ export class PetsController {
     };
   }
 
+  @ApiRemoveOperation(
+    {
+      summary: 'Remove um pet pelo ID.',
+      description: 'Remove um pet específico com base no ID fornecido.',
+    },
+    RemovePetResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<RemovePetResponseDto> {
@@ -91,6 +120,13 @@ export class PetsController {
     };
   }
 
+  @ApiFindOperation(
+    {
+      summary: 'Retorna uma lista de pets por dono.',
+      description: 'Retorna uma lista paginada de pets pertencentes a um dono específico.',
+    },
+    FindAllPetsResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Get('/user/:id')
   findByOwner(@Param('id') id: string, @Query() queryParams?: PaginatePetDto) {
