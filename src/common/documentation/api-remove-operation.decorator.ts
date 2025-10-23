@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { applyDecorators, Type } from '@nestjs/common';
 
-export function ApiDeleteOperation(
+export function ApiRemoveOperation(
   operationOptions: ApiOperationOptions,
   dataType: Type<unknown>,
 ) {
