@@ -13,7 +13,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AccessTokenGuard } from '../auth/guards/access-token.guard';
-import { ApiCreateOperation } from 'src/common/documentation';
+import { ApiCreateOperation, ApiFindOperation, ApiRemoveOperation, ApiUpdateOperation } from 'src/common/documentation';
 import {
   CreateUserResponseDto,
   FindAllUsersResponseDto,
@@ -46,6 +46,13 @@ export class UsersController {
     };
   }
 
+  @ApiFindOperation(
+    {
+      summary: 'Retorna uma lista de usuários.',
+      description: 'Retorna uma lista paginada de usuários com base nos filtros fornecidos.',
+    },
+    FindAllUsersResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Get()
   async findAll(
@@ -66,6 +73,13 @@ export class UsersController {
     };
   }
 
+  @ApiFindOperation(
+    {
+      summary: 'Retorna um usuário pelo ID.',
+      description: 'Retorna os detalhes de um usuário específico com base no ID fornecido.',
+    },
+    FindOneUserResponseDto,
+  )
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<FindOneUserResponseDto> {
     const user = await this.usersService.findOne(id);
@@ -76,6 +90,13 @@ export class UsersController {
     };
   }
 
+  @ApiUpdateOperation(
+    {
+      summary: 'Atualiza um usuário existente.',
+      description: 'Atualiza as informações de um usuário com base no ID e nos dados fornecidos.',
+    },
+    UpdateUserResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Patch(':id')
   async update(
@@ -90,6 +111,13 @@ export class UsersController {
     };
   }
 
+  @ApiRemoveOperation(
+    {
+      summary: 'Remove um usuário pelo ID.',
+      description: 'Remove um usuário específico com base no ID fornecido.',
+    },
+    RemoveUserResponseDto,
+  )
   @UseGuards(AccessTokenGuard)
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<RemoveUserResponseDto> {
